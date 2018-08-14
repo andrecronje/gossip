@@ -1,0 +1,261 @@
+%!TEX program = xelatex
+
+\documentclass[12pt]{article}
+\usepackage[UTF8, heading = false, scheme = plain]{ctex}
+
+\usepackage{fontspec}
+
+\setCJKmainfont[BoldFont=STSongti-SC-Black, ItalicFont=STKaiti]{STSongti-SC-Regular}
+\setCJKsansfont[BoldFont=STHeiti]{STXihei}
+\setCJKmonofont{STFangsong}
+
+\setlength{\parskip}{0.16\baselineskip}
+
+\usepackage{indentfirst}
+\XeTeXlinebreaklocale “zh”
+\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+\usepackage{xltxtra}
+\usepackage{a4wide}
+% other packages
+\usepackage{amsmath, amssymb}
+\usepackage{calc}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsthm}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[ruled]{algorithm2e}
+\usepackage{breakcites}
+\usepackage{enumerate}
+
+\usepackage{multirow}
+
+\usepackage{titlesec}   %设置页眉页脚
+\newpagestyle{main}{
+    \sethead{赖文星}{简单、快速的确定型八卦传播算法}{17210240130}     %设置页眉
+    \headrule                     % 添加页眉的下划线
+}
+\pagestyle{main}
+
+% meta-self-defined part
+\newcommand{\nc}{\newcommand}
+\nc{\rnc}{\renewcommand}
+
+\rnc{\bf}{\textbf}
+\rnc{\sf}{\textsf}
+\rnc{\it}{\textit}
+\rnc{\rm}{\textrm}
+\rnc{\tt}{\texttt}
+
+\nc{\Class}[1]{\ensuremath{\mathsf{#1}}}
+\nc{\Lang}[1]{\textsc{#1}}
+% complexity classes
+\nc{\PSPACE}{\bf{PSPACE}}
+\nc{\PH}{\bf{PH}}
+\nc{\PHS}[1]{\ensuremath{\Sigma_{#1}^{\bf{P}}}}
+\nc{\Ppoly}{{\lang{P/poly}}}
+\nc{\SIZE}[1]{\ensuremath{\lang{SIZE}[#1]}}
+
+\nc{\TQBF}{\sf{TQBF}}
+\nc{\SigmaSAT}[1]{\ensuremath{\Sigma_{#1}}\lang{SAT}}
+
+
+% theorems and proofs
+\newtheorem{theorem}{定理}[section]
+\newtheorem{corollary}{推论}[theorem]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem*{remark}{注记}
+\newtheorem{definition}{定义}[section]
+
+% sets
+\nc{\naturalnumber}{\ensuremath{\mathbb{N}}}
+
+% self-defined symbols
+\nc{\bigo}{\textrm{O}}
+\nc{\pullpush}{\tt{PULL-PUSH}}
+\nc{\nei}[1][]{\ensuremath{\Gamma^{#1}}}
+\renewcommand{\algorithmcfname}{算法}
+\nc{\itree}[1][i]{\ensuremath{#1}\rm{-tree}}
+\nc{\vol}{\rm{vol}}
+\nc{\erdos}{Erdős–Rényi}
+
+\renewcommand{\refname}{参考文献}
+% end setting
+\title{简单、快速的确定型八卦传播算法}
+\date{2018年6月}
+\author{赖文星·17210240130\\ 复旦大学·计算机科学技术学院}
+
+\begin{document}
+\maketitle
+\section{问题介绍}
+八卦（\it{gossip}，流言、小道消息）在人类进化中扮演了重要角色，
+同时也能促进社会稳定\cite{DunbarGossipevolutionaryperspective2004}；
+也由有实验表明，八卦促进了社会合作\cite{Feinbergvirtuesgossipreputational2012}。
+关于八卦，我们通常能够观察到这样一种现象，
+即当你把秘密告诉了你的好友，不久之后该秘密似乎就众人皆知了——八卦何来如此强大的传播能力？
+在Chierichetti等人的论文指出，人群中随机地传播八卦，
+只需要将经过$\bigo(\frac{\log n}{\Phi})$轮传播（这里$\Phi$表明图的电导率，\it{conductance}），
+八卦就有很高的概率变得众人皆知\cite{ChierichettiRumorSpreadingConductance2018}。
+同时，在未知网络中\it{广播}信息，也是计算机网络中的一个基本问题；而八卦传播算法（\it{gossip algorithms}），即每个节点每次只能联络一个邻居节点的模型中，已经有了广泛的研究。例如，洪泛（\it{flooding}）的方法，即以此地向邻居节点发送、交换信息被证明是高效的，并且可以利用该方法使得八卦传播轮数与图的电导率无关\cite{Censor-HillelGlobalComputationPoorly2012}。
+
+在本文中我们将介绍Haeupler提出的第一个确定的与图的电导率无关的八卦传播方法\footnote{该文章获得了SODA13最佳学生论文，并刊载于2015年第6期\it{Journal of the ACM}。}\cite{HaeuplerSimpleFastDeterministic2015}，并将其与随机的\pullpush 模型进行对比。
+\subsection{结果}
+Haeupler的文章提供了一种快速、简单、高效且\bf{确定}的解决局部广播问题的八卦传播算法。
+\begin{theorem}
+  对于任意的$k\in \naturalnumber$，存在一个确定的八卦传播算法，在任意的$n$-节点图上运行$2(k\log n + \log^2 n)$轮即可解决$k$-局部广播问题，即每个节点与其距离不超过$k$的节点完成八卦交换。
+\end{theorem}
+取$k=D$，即可立即得到以下推论：
+\begin{corollary}
+  存在一个确定的八卦传播算法，其在任意$n$-节点且直径为$D$的图上运行$2(D\log n + \log^2 n)$轮即可解决全局广播问题。
+\end{corollary}
+
+Haeupler的该文最重要的贡献在于，该作者提出了第一个确定的解决广播问题的算法，且比Censor-Hillel等人的算法解决$k=1$的局部广播问题快$\Theta(\log n)$，对于$k=\log n$则要快$\Theta(\log^2 n)$；并且该算法是确定的，能够给运行时间以确定的保证。另外，该算法更简单、自然，对其分析也十分直接，具有美感。
+
+\subsection{八卦传播算法与局部广播问题}
+在本小节中我们将简单介绍问题的模型以及相关的定义。
+
+\bf{基本概念}\hspace{1em}
+关于图的基本概念，请参阅\cite{DiestelGraphTheory2017}。此外，我们再次特别指出图的电导率的定义。
+在此之前，我们定义$\vol(S)=\sum_{v\in S}\deg(v)$，即节点集合$S$中节点的度数和。
+\begin{definition}[电导率\cite{JerrumApproximatingPermanent1989}]
+  在图中非空节点结合$S$的电导率为
+  \[
+    \Phi(S) = \frac{|\textup{cut}(S, V\setminus S)|}{\textup{\vol}(S)}
+  \]
+  对于图的电导率，我们定义它为
+  \[
+    \Phi = \min_{S\subseteq V,\ 0<\textup{\vol}(S)\leq\frac{\textup{\vol}(V)}{2}} \frac{|\textup{cut}(S, V\setminus S)|}{\textup{\vol}(S)}
+  \]
+\end{definition}
+
+\bf{网络} \hspace{1em}
+我们记无向图$G=(V,E)$的节点数为$n=|V|$，边数为$m=|E|$，直径为$D$。
+对于每个节点$v\in V$，我们记$\nei(v)=\{u | \{u, v\}\in E\} \cup \{v\}$；类似地，我们记$\nei[k](v)=\{u | \rm{there is a path of length } k \rm{ from } v \rm{ to } u\} \cup \{v\}$。
+
+\bf{八卦传播}\hspace{1em}
+这里，我们的模型中每个节点\bf{同步地}按轮$t\in\{0, 1, \dots\}$传播八卦信息。
+与Censor-Hillel等人定义的模型一致，我们对于每次信息传播的量不作限制（因为在现代网络中，信息量相对较少的信息传播时间并非主要的瓶颈），并且我们假设每次传播都是\bf{交换}信息（而非\pullpush 中的仅仅是单方向的传播）。这里，我们也假设最开始每个节点不知道除了其邻居节点的之外的任何信息。
+
+\bf{局部广播问题}\hspace{1em}
+我们现在定义我们所讨论的问题。
+\begin{definition}[全局广播问题]
+  每个节点$v$以八卦$r_v$开始，其目标在于每个节点都知道所有的八卦。
+\end{definition}
+在该文章中，作者主要关注于$k$-局部广播问题：
+\begin{definition}
+  每个节点$v$以八卦$r_v$开始，其目标在于每个节点$v$都知道$\nei[k](v)$中所有节点的八卦。
+\end{definition}
+我们关注$k$-局部广播问题的原因在于：
+\begin{itemize}
+  \item 该问题是全局广播问题的推广；实际上对于任意的$k>D$，$k$-局部广播问题等同于全局广播问题。
+  \item 在之前的许多工作中，$k$-局部广播问题是解决有着“瓶颈”的图上的全局广播问题的关键。
+  \item 在现实意义下，$k$-局部广播问题的重要性在于，在例如社交网络中，每个节点通常只关心与其有着直接联系的或距离很短的节点的八卦。
+\end{itemize}
+
+\section{算法与分析}
+\subsection{$1$-局部广播问题}
+对于每个节点在每一轮中的行为，作者提出了如下算法。
+
+\begin{algorithm}[H]
+  \caption{1-DeterministicGossip}
+  \SetAlgoNoLine
+  $R=\{v\}$\\
+  $i=0$\\
+  \While{$\nei(v)\setminus R\neq\emptyset$}{
+    $i = i+1$\\
+    link to any new neighbor $u_i\in\nei(v)\setminus R$\\
+    PUSH:\For{$j=i$ downto $1$}{
+      exchange rumors with $u_j$\\
+    }
+    PULL:\For{$j=1$ to $i$}{
+      exchange rumors with $u_j$\\
+    }
+    perform PULL, PUSH again
+  }
+\end{algorithm}
+
+\begin{theorem}
+  \rm{算法1}以$\log n$次迭代、不超过$2(\log n + 1)^2$轮解决了$1$-局部广播问题。
+\end{theorem}
+为了证明该定理，我们需要首先定义\itree 。
+\begin{definition}
+  一个\itree 为一个有根的、深度为$i$的、节点个数为$2^i$的树。其归纳构造如下：
+  \begin{enumerate}
+    \item 一个\itree[0]包含一个节点；
+    \item 对于$i\in\naturalnumber$，\itree[(i+1)]的构造是，取两个\itree ，并将该二者的根节点相连，取其中一个的根节点为\itree[(i+1)]的根节点。
+  \end{enumerate}
+\end{definition}
+现在，我们可以将\itree 和八卦的传播联系起来。假设在第$i$次迭代中，$v_0$尚未结束八卦传播，那么我们可以构造其\itree\ $\tau_0$如下。$\tau_0$的根为$v_0$，其子节点依次为$u_1, \dots, u_{i-1}$，其分别在第$1, \dots, i-1$轮被$v_0$“发现”。我们递归地以每一个$u_j$为根节点，这里$j\in[i-1]$，为其添加子节点$w_1, \dots, w_{j-1}$，这里新添加的子节点是前$j$次迭代之前$u_j$所“发现”的节点；现在我们对每个$u_j$的子节点递归地做类似的构造，如此反复。该构造的解释是，$v_0$在第$j$次迭代仍然活跃的原因是，其邻居$u_j$仍未被该节点所知，而$u_j$在该次迭代活跃的原因是，其邻居$v_0$仍未被该节点所知；如此我们可以递归地解释该树中的每一个节点。
+
+现在我们使用以下引理。
+\begin{lemma}
+  假设$u$和$v$在第$i$轮迭代开始时仍然活跃，$\tau_u$与$\tau_v$是其相应的\itree。那么在该论中的PUSH操作后，所有$\tau_u$中的节点将会收到来自$u$的八卦（对$v$与$\tau_v$同理）；进一步，如果$\tau_u$和$\tau_v$有公共节点，那么在PUSH和PULL操作后，$u,v$将会互相知道来自对方的八卦。
+\end{lemma}
+\begin{proof}[证明]
+  对树深度作归纳，容易证明第一点。在此基础上，假设$\tau_u$和$\tau_v$有公共节点$y$，那么根据上一单可知，在PUSH操作中，$y$将了解到$u,v$的八卦，因此在PULL操作中，$u,v$将获得来自$y$的对方的八卦。
+\end{proof}
+现在即可用该引理证明本节的定理。
+\begin{proof}[对\rm{定理2.1}的证明]
+  我们将证明使用\rm{算法1}的迭代次数不超过$\log n$。首先注意到该算法的对称性，即当$v$“发现”$u$后，$u$也“发现”了$v$——因为每轮中的PULL-PUSH操作和PUSH-PULL是对称的。现假设在第$i$轮后$u,v$互不知晓对方的八卦，那么可以得到$\tau_u$和$\tau_v$没有公共节点。而在第$\log n$次迭代后，$\tau_u$和$\tau_v$的节点数分别为$n$，这与二者没有公共节点矛盾。因此我们可以得到结论$\log n$次迭代可以保证$1$-局部广播问题完成。通过计算可知，解决该问题的总轮数不超过$\sum_{i=1}^{\log n}4i = 2\log n(\log n + 1)$。
+\end{proof}
+
+\subsection{$k$-局部广播问题}
+现在我们可以将上一小节的算法推广至$k$-局部广播问题。首先可以直接将算法1运行$k-1$次——这显然能解决$k$-局部广播问题。但考虑到，在算法1中，只有最后一步是保证了所有的邻居都收到了$v$信息，而之前的每次迭代都是为了“发现”新节点而依次来扩张$\tau_v$。因此只需要新增$k-1$次迭代，每次迭代都向发现的邻居发送信息即可。
+因此，算法的总运行轮数为$2\log n(k + \log n)$。如果我们想要解决全局广播问题，只需要设置$k=D$即可。
+
+
+\begin{algorithm}[H]
+  \caption{k-DeterministicGossip}
+  \SetAlgoNoLine
+  $R=\{v\}$\\
+  $i=0$\\
+  Run 1-DeterministicGossip algorithm to discover neighbors
+  \For{$s=1$ to $k-1$}{
+    PUSH:\For{$j=i$ downto $1$}{
+      exchange rumors with $u_j$\\
+    }
+    PULL:\For{$j=1$ to $i$}{
+      exchange rumors with $u_j$\\
+    }
+  }
+\end{algorithm}
+
+\section{与随机\pullpush 模型的比较}
+在本节中，我们会生成一系列的图，并在此之上与\pullpush 模型比较全局广播问题的运行情况。（由于本文改进了Censor-Hillel等人提供的与电导率无关的随机算法\cite{Censor-HillelGlobalComputationPoorly2012}，且在思路上一脉相承，故不再与之比较。）
+\subsection{\pullpush 模型}
+自从Demers等人介绍了\pullpush 模型\cite{DemersEpidemicAlgorithmsReplicated1987}后，该模型得到了广泛的研究。
+该模型是对于八卦仅仅来源于单节点的情况所作的讨论；
+在每一轮中，持有该八卦的节点均匀地随机从其邻居中选择一个节点，并将该信息推送给它，而不持有该信息的节点也会均匀地随机从其邻居中选择一个节点，并向其请求信息。
+Chiertichetti等人分析了该模型的高效性，即只需要将经过$\bigo(\frac{\log n}{\Phi})$轮传播，某节点的八卦即可以高概率被所有节点所知。这里，随机性扮演了重要的角色。
+
+为适应我们的问题，即所有的节点都有其八卦的情况，我们将\pullpush 模型稍作修改。现我们定义每一轮中，持有\bf{所有信息}（因为现在我们不仅仅考虑信息仅来自于一个节点）的节点将均匀地从其邻居中选择一个节点，将信息推送给它，而不持有所有信息的节点，将均匀地从其邻居中选择一个节点并将自己的信息与之\bf{交换}（因为我们在算法1和2中总是和某个邻居交换信息）。
+\subsection{结果}
+我们将在连通的$(2048,\frac{\ln 2048}{2048})$-\erdos  图\cite{Erdosevolutionrandomgraphs1960}、$(1024, 12)$-barbell图\cite{AlonManyRandomWalks2007}、$8$-barbell图（其中每个团为$K_{256}$）\footnote{该图的电导率为$\Theta(\frac{c}{n^2})$\cite{Censor-HillelFastInformationSpreading2011}，且通过计算发现其他图的电导率是该图的数十倍。}与$2047$-节点二叉树上比较\tt{D-DeterministicGossip}与\pullpush 传播算法；
+其中，对于\erdos 模型我们生成多次，并且在每一个图上运行\pullpush 多次并取其平均。
+\footnote{由于电导率的计算是NP-难的，因此本来试图利用Cheeger不等式\cite{Cheegerlowerboundsmallest1969}取$\sqrt{2\lambda_2}$为电导率上界，这里$\lambda_2$是邻接矩阵的正则化Laplacian矩阵的第二小特征值。但是SciPy在计算特征值的时候，计算结果都极小且有的图上出现了复数，因此并没有将计算得到的特征值列在这里。}
+
+\renewcommand\arraystretch{1.15}
+% \renewcommand{\footnoterule}{\rule{\linewidth}{0pt}}
+\begin{longtable}{|c|c|c|c|c|}
+  \hline
+  \multirow{2}{*}{模型} &
+  \multirow{2}{*}{直径} &
+  \multirow{2}{*}{算法2轮数} &
+  \multicolumn{2}{c|}{\tt{\pullpush}轮数}\\
+  \cline{4-5}
+   & & & 平均 & 最大\\
+   \hline
+  \small{$(2048,\frac{\ln 2048}{2048})$-\erdos} & 7 & 16 & 11.4 & 12\\ \hline
+  $(1024,12)$-Barbell & 14 & 17 & 31.8 & 35\\ \hline
+  $8$-Barbell($K_{256}$) & 16 & 17 & 1137.4 & 1237\\ \hline
+  $2047$-节点二叉树 & 20 & 24 & 47.4 & 50\\
+  \hline
+\end{longtable}
+
+由此我们可以得出结论，虽然在高度连通的\erdos 图上\tt{DeterministicGossip}算法比\pullpush 算法的运行轮数稍多，但可以看到在连通性不是那么强的图上，算法2的运行轮数大约至多为\pullpush 算法轮数的一半；而且可以看到，有Censor-Hillel等人提出的由$K_{256}$组成的$8$-Barbell图上，确定型的算法2比随机的\pullpush 快了约66倍。
+\medskip
+\bibliographystyle{apalike}
+\bibliography{library}
+\end{document}
